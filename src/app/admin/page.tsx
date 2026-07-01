@@ -347,12 +347,16 @@ function DonationRow({ donation: d, onUpdate }: { donation: Donation; onUpdate: 
               </Button>
             </>
           )}
-          {d.proofUrl && (
+          {d.proofUrl ? (
             <a href={d.proofUrl} target="_blank" rel="noopener noreferrer">
               <Button size="sm" variant="ghost" className="text-xs h-8 cursor-pointer text-muted-foreground hover:text-foreground">
                 <Eye className="w-3 h-3 mr-1" />Comprobante
               </Button>
             </a>
+          ) : (
+            <span className="text-[10px] text-muted-foreground border border-dashed border-border rounded px-2 py-1">
+              Sin comprobante
+            </span>
           )}
         </div>
       </div>
