@@ -1,0 +1,28 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: puente-ve:latest
+    container_name: puente-ve
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Turso remoto: libsql://<db>.turso.io?authToken=<token>
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      # Vercel Blob (subida de comprobantes)
+      BLOB_READ_WRITE_TOKEN: ${BLOB_READ_WRITE_TOKEN:?BLOB_READ_WRITE_TOKEN is required}
+    # Carga automáticamente estas variables desde un archivo .env junto al compose.
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/v1/donations"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+# NOTA: NEXT_PUBLIC_TEST_CODE (el muro /test-gate) se inlinea en tiempo de build,
+# no en runtime. Si lo quieres activar, pásalo como build arg y ajústalo en el
+# Dockerfile antes de `npm run build`.

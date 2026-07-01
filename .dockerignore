@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.gitignore
+npm-debug.log*
+.env*
+*.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+dev.db
+prisma/dev.db
+.vercel
+coverage
+.DS_Store
