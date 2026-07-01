@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -9,10 +9,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Estado inválido' }, { status: 400 })
   }
 
-  const beneficiary = await prisma.beneficiary.update({
-    where: { id },
-    data: { status },
+  await db.execute({
+    sql: `UPDATE Beneficiary SET status = ?, updatedAt = ? WHERE id = ?`,
+    args: [status, new Date().toISOString(), id],
   })
 
-  return NextResponse.json(beneficiary)
+  return NextResponse.json({ id, status })
 }

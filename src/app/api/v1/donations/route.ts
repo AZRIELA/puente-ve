@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/db'
+import { createId } from '@paralleldrive/cuid2'
 
 export async function GET() {
-  const donations = await prisma.donation.findMany({
-    orderBy: { createdAt: 'desc' },
-  })
-  return NextResponse.json(donations)
+  const result = await db.execute('SELECT * FROM Donation ORDER BY createdAt DESC')
+  return NextResponse.json(result.rows)
 }
 
 export async function POST(req: NextRequest) {
@@ -16,18 +15,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
-  const donation = await prisma.donation.create({
-    data: {
-      donor: isAnonymous ? null : (donor ?? null),
-      isAnonymous: isAnonymous ?? false,
-      amount: parseFloat(amount),
+  const id = createId()
+  const now = new Date().toISOString()
+
+  await db.execute({
+    sql: `INSERT INTO Donation (id, donor, isAnonymous, amount, currency, channel, message, proofUrl, status, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+    args: [
+      id,
+      isAnonymous ? null : (donor ?? null),
+      isAnonymous ? 1 : 0,
+      parseFloat(amount),
       currency,
       channel,
-      message: message ?? null,
-      proofUrl: proofUrl ?? null,
-      status: 'pending',
-    },
+      message ?? null,
+      proofUrl ?? null,
+      now,
+      now,
+    ],
   })
 
-  return NextResponse.json(donation, { status: 201 })
+  return NextResponse.json({ id, status: 'pending' }, { status: 201 })
 }
