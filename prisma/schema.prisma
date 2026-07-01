@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Donation {
+  id          String   @id @default(cuid())
+  donor       String?
+  isAnonymous Boolean  @default(false)
+  amount      Float
+  currency    String   // CLP | USD | USDT
+  channel     String   // global66 | transfer | usdt
+  message     String?
+  proofUrl    String?
+  status      String   @default("pending") // pending | confirmed | rejected
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Beneficiary {
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  cedula       String?
+  state        String
+  city         String?
+  situation    String   // sismo | desplazado | sin_acceso | heridos
+  householdSize String
+  hasMinors    Boolean  @default(false)
+  hasElders    Boolean  @default(false)
+  details      String?
+  phone        String
+  altPhone     String?
+  usdtWallet   String?
+  status       String   @default("pending") // pending | verified | helped | rejected
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
