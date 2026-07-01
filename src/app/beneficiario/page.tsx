@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Users, AlertCircle } from 'lucide-react'
@@ -84,11 +84,11 @@ export default function BeneficiarioPage() {
           {(['info', 'situation', 'contact'] as Step[]).map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               <div className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                step === s ? 'bg-[oklch(0.78_0.09_72)] scale-125'
+                step === s ? 'bg-[oklch(0.82_0.16_85)] scale-125'
                 : ['situation', 'contact', 'success'].indexOf(step) > i ? 'bg-[oklch(0.78_0.09_72/0.6)]'
-                : 'bg-[oklch(0.28_0.007_72)]'
+                : 'bg-[oklch(0.25_0.04_255)]'
               }`} />
-              {i < 2 && <div className="w-8 h-px bg-[oklch(0.28_0.007_72)]" />}
+              {i < 2 && <div className="w-8 h-px bg-[oklch(0.25_0.04_255)]" />}
             </div>
           ))}
         </div>
@@ -97,7 +97,7 @@ export default function BeneficiarioPage() {
         {step !== 'success' && (
           <div className="w-full rounded-xl border border-[oklch(0.62_0.18_255/0.3)] bg-[oklch(0.62_0.18_255/0.06)] p-4 flex gap-3 mb-6">
             <AlertCircle className="w-4 h-4 text-[oklch(0.62_0.18_255)] flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-[oklch(0.52_0.005_72)] leading-relaxed">
+            <p className="text-xs text-[oklch(0.55_0.015_255)] leading-relaxed">
               Tus datos son confidenciales. Solo el equipo verificador los verá. No se publican en ningún lugar.
             </p>
           </div>
@@ -108,7 +108,7 @@ export default function BeneficiarioPage() {
           <div className="w-full space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div>
               <h1 className="font-display font-bold text-4xl uppercase">Tus datos</h1>
-              <p className="text-[oklch(0.52_0.005_72)] mt-2 text-sm">Necesitamos verificar tu identidad para procesar tu solicitud.</p>
+              <p className="text-[oklch(0.55_0.015_255)] mt-2 text-sm">Necesitamos verificar tu identidad para procesar tu solicitud.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -125,11 +125,11 @@ export default function BeneficiarioPage() {
             />
 
             <div>
-              <Label className="text-xs text-[oklch(0.52_0.005_72)] mb-2 block">Estado</Label>
+              <Label className="text-xs text-[oklch(0.55_0.015_255)] mb-2 block">Estado</Label>
               <select
                 value={state}
                 onChange={(e) => setState(e.target.value)}
-                className="w-full rounded-xl border border-[oklch(0.28_0.007_72)] bg-[oklch(0.13_0.006_72)] px-4 py-3 text-sm focus:outline-none focus:border-[oklch(0.78_0.09_72)] transition-colors cursor-pointer"
+                className="w-full rounded-xl border border-[oklch(0.25_0.04_255)] bg-[oklch(0.14_0.025_255)] px-4 py-3 text-sm focus:outline-none focus:border-[oklch(0.82_0.16_85)] transition-colors cursor-pointer"
               >
                 <option value="">Selecciona tu estado</option>
                 {VENEZUELA_STATES.map((s) => (
@@ -143,7 +143,7 @@ export default function BeneficiarioPage() {
             <Button
               onClick={() => setStep('situation')}
               disabled={!step1Valid}
-              className="w-full bg-[oklch(0.78_0.09_72)] text-[oklch(0.09_0.005_72)] hover:bg-[oklch(0.84_0.08_72)] font-bold text-base h-12 cursor-pointer active:scale-[0.98] transition-all disabled:opacity-40"
+              className="w-full bg-[oklch(0.82_0.16_85)] text-[oklch(0.10_0.025_255)] hover:bg-[oklch(0.90_0.14_85)] font-bold text-base h-12 cursor-pointer active:scale-[0.98] transition-all disabled:opacity-40"
             >
               Siguiente →
             </Button>
@@ -155,7 +155,7 @@ export default function BeneficiarioPage() {
           <div className="w-full space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div>
               <h1 className="font-display font-bold text-4xl uppercase">Tu situación</h1>
-              <p className="text-[oklch(0.52_0.005_72)] mt-2 text-sm">Esto nos ayuda a priorizar la ayuda correctamente.</p>
+              <p className="text-[oklch(0.55_0.015_255)] mt-2 text-sm">Esto nos ayuda a priorizar la ayuda correctamente.</p>
             </div>
 
             <div className="space-y-3">
@@ -165,17 +165,17 @@ export default function BeneficiarioPage() {
                   onClick={() => setSituation(s.id)}
                   className={`w-full text-left rounded-2xl border p-4 transition-all cursor-pointer active:scale-[0.98] ${
                     situation === s.id
-                      ? 'border-[oklch(0.78_0.09_72)] bg-[oklch(0.78_0.09_72/0.08)]'
-                      : 'border-[oklch(0.28_0.007_72)] hover:border-[oklch(0.78_0.09_72/0.4)]'
+                      ? 'border-[oklch(0.82_0.16_85)] bg-[oklch(0.82_0.16_85/0.08)]'
+                      : 'border-[oklch(0.25_0.04_255)] hover:border-[oklch(0.82_0.16_85/0.3)]'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${situation === s.id ? 'border-[oklch(0.78_0.09_72)]' : 'border-[oklch(0.52_0.005_72)]'}`}>
-                      {situation === s.id && <div className="w-2 h-2 rounded-full bg-[oklch(0.78_0.09_72)]" />}
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${situation === s.id ? 'border-[oklch(0.82_0.16_85)]' : 'border-[oklch(0.55_0.015_255)]'}`}>
+                      {situation === s.id && <div className="w-2 h-2 rounded-full bg-[oklch(0.82_0.16_85)]" />}
                     </div>
                     <div>
                       <p className="font-semibold text-sm">{s.label}</p>
-                      <p className="text-xs text-[oklch(0.52_0.005_72)]">{s.desc}</p>
+                      <p className="text-xs text-[oklch(0.55_0.015_255)]">{s.desc}</p>
                     </div>
                   </div>
                 </button>
@@ -183,7 +183,7 @@ export default function BeneficiarioPage() {
             </div>
 
             <div>
-              <Label className="text-xs text-[oklch(0.52_0.005_72)] mb-2 block">Personas en el hogar</Label>
+              <Label className="text-xs text-[oklch(0.55_0.015_255)] mb-2 block">Personas en el hogar</Label>
               <div className="grid grid-cols-5 gap-2">
                 {['1', '2', '3', '4', '5+'].map((n) => (
                   <button
@@ -191,8 +191,8 @@ export default function BeneficiarioPage() {
                     onClick={() => setHouseholdSize(n)}
                     className={`py-3 rounded-xl border text-sm font-semibold transition-all cursor-pointer active:scale-[0.96] ${
                       householdSize === n
-                        ? 'border-[oklch(0.78_0.09_72)] bg-[oklch(0.78_0.09_72/0.1)] text-[oklch(0.78_0.09_72)]'
-                        : 'border-[oklch(0.28_0.007_72)] hover:border-[oklch(0.78_0.09_72/0.4)]'
+                        ? 'border-[oklch(0.82_0.16_85)] bg-[oklch(0.78_0.09_72/0.1)] text-[oklch(0.82_0.16_85)]'
+                        : 'border-[oklch(0.25_0.04_255)] hover:border-[oklch(0.82_0.16_85/0.3)]'
                     }`}
                   >
                     {n}
@@ -207,24 +207,24 @@ export default function BeneficiarioPage() {
             </div>
 
             <div>
-              <Label className="text-xs text-[oklch(0.52_0.005_72)] mb-2 block">Describe brevemente tu situación (opcional)</Label>
+              <Label className="text-xs text-[oklch(0.55_0.015_255)] mb-2 block">Describe brevemente tu situación (opcional)</Label>
               <textarea
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Cuéntanos qué pasó y qué necesitas..."
                 rows={3}
-                className="w-full rounded-xl border border-[oklch(0.28_0.007_72)] bg-[oklch(0.13_0.006_72)] px-4 py-3 text-sm focus:outline-none focus:border-[oklch(0.78_0.09_72)] resize-none transition-colors"
+                className="w-full rounded-xl border border-[oklch(0.25_0.04_255)] bg-[oklch(0.14_0.025_255)] px-4 py-3 text-sm focus:outline-none focus:border-[oklch(0.82_0.16_85)] resize-none transition-colors"
               />
             </div>
 
             <Button
               onClick={() => setStep('contact')}
               disabled={!step2Valid}
-              className="w-full bg-[oklch(0.78_0.09_72)] text-[oklch(0.09_0.005_72)] hover:bg-[oklch(0.84_0.08_72)] font-bold text-base h-12 cursor-pointer active:scale-[0.98] transition-all disabled:opacity-40"
+              className="w-full bg-[oklch(0.82_0.16_85)] text-[oklch(0.10_0.025_255)] hover:bg-[oklch(0.90_0.14_85)] font-bold text-base h-12 cursor-pointer active:scale-[0.98] transition-all disabled:opacity-40"
             >
               Siguiente →
             </Button>
-            <button onClick={() => setStep('info')} className="w-full text-sm text-[oklch(0.52_0.005_72)] hover:text-foreground transition-colors cursor-pointer">
+            <button onClick={() => setStep('info')} className="w-full text-sm text-[oklch(0.55_0.015_255)] hover:text-foreground transition-colors cursor-pointer">
               ← Volver
             </button>
           </div>
@@ -235,7 +235,7 @@ export default function BeneficiarioPage() {
           <div className="w-full space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div>
               <h1 className="font-display font-bold text-4xl uppercase">Contacto</h1>
-              <p className="text-[oklch(0.52_0.005_72)] mt-2 text-sm">Para avisarte cuando la ayuda esté lista para enviarse.</p>
+              <p className="text-[oklch(0.55_0.015_255)] mt-2 text-sm">Para avisarte cuando la ayuda esté lista para enviarse.</p>
             </div>
 
             <FormField
@@ -265,11 +265,11 @@ export default function BeneficiarioPage() {
             <Button
               onClick={handleSubmit}
               disabled={!step3Valid || submitting}
-              className="w-full bg-[oklch(0.78_0.09_72)] text-[oklch(0.09_0.005_72)] hover:bg-[oklch(0.84_0.08_72)] font-bold text-base h-12 cursor-pointer active:scale-[0.98] transition-all disabled:opacity-40"
+              className="w-full bg-[oklch(0.82_0.16_85)] text-[oklch(0.10_0.025_255)] hover:bg-[oklch(0.90_0.14_85)] font-bold text-base h-12 cursor-pointer active:scale-[0.98] transition-all disabled:opacity-40"
             >
               {submitting ? 'Enviando...' : 'Enviar solicitud'}
             </Button>
-            <button onClick={() => setStep('situation')} className="w-full text-sm text-[oklch(0.52_0.005_72)] hover:text-foreground transition-colors cursor-pointer">
+            <button onClick={() => setStep('situation')} className="w-full text-sm text-[oklch(0.55_0.015_255)] hover:text-foreground transition-colors cursor-pointer">
               ← Volver
             </button>
           </div>
@@ -278,32 +278,32 @@ export default function BeneficiarioPage() {
         {/* SUCCESS */}
         {step === 'success' && (
           <div className="w-full flex flex-col items-center text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
-            <div className="w-20 h-20 rounded-full bg-[oklch(0.78_0.09_72/0.15)] border border-[oklch(0.78_0.09_72/0.4)] flex items-center justify-center gold-glow">
-              <Users className="w-10 h-10 text-[oklch(0.78_0.09_72)]" />
+            <div className="w-20 h-20 rounded-full bg-[oklch(0.82_0.16_85/0.12)] border border-[oklch(0.82_0.16_85/0.3)] flex items-center justify-center ve-glow">
+              <Users className="w-10 h-10 text-[oklch(0.82_0.16_85)]" />
             </div>
             <div>
               <h1 className="font-display font-bold text-4xl uppercase">Solicitud enviada</h1>
-              <p className="text-[oklch(0.52_0.005_72)] mt-3 text-base leading-relaxed max-w-sm">
+              <p className="text-[oklch(0.55_0.015_255)] mt-3 text-base leading-relaxed max-w-sm">
                 Recibimos tu información. Nuestro equipo te contactará a tu WhatsApp en las próximas 24–48 horas para verificar y coordinar la ayuda.
               </p>
             </div>
-            <div className="rounded-2xl border border-[oklch(0.28_0.007_72)] bg-[oklch(0.13_0.006_72)] p-5 w-full text-left">
-              <p className="text-xs text-[oklch(0.52_0.005_72)] uppercase tracking-widest mb-3">Estado de tu solicitud</p>
+            <div className="rounded-2xl border border-[oklch(0.25_0.04_255)] bg-[oklch(0.14_0.025_255)] p-5 w-full text-left">
+              <p className="text-xs text-[oklch(0.55_0.015_255)] uppercase tracking-widest mb-3">Estado de tu solicitud</p>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-[oklch(0.75_0.15_70)] animate-pulse" />
                 <span className="text-sm font-semibold">En verificación</span>
               </div>
-              <p className="text-xs text-[oklch(0.52_0.005_72)] mt-2">
+              <p className="text-xs text-[oklch(0.55_0.015_255)] mt-2">
                 {firstName} {lastName} · {VENEZUELA_STATES.find(s => s === state) || state}
               </p>
             </div>
             <div className="rounded-2xl border border-[oklch(0.62_0.18_255/0.3)] bg-[oklch(0.62_0.18_255/0.06)] p-4 w-full">
-              <p className="text-xs text-[oklch(0.52_0.005_72)] leading-relaxed">
+              <p className="text-xs text-[oklch(0.55_0.015_255)] leading-relaxed">
                 <strong className="text-foreground">Guarda este mensaje.</strong> Si no te contactamos en 48h, escríbenos a nuestro WhatsApp de soporte.
               </p>
             </div>
             <a href="/" className="w-full">
-              <Button variant="outline" className="w-full border-[oklch(0.28_0.007_72)] cursor-pointer">
+              <Button variant="outline" className="w-full border-[oklch(0.25_0.04_255)] cursor-pointer">
                 Volver al inicio
               </Button>
             </a>
@@ -320,14 +320,14 @@ function FormField({ label, value, onChange, placeholder, hint }: {
 }) {
   return (
     <div>
-      <Label className="text-xs text-[oklch(0.52_0.005_72)] mb-2 block">{label}</Label>
+      <Label className="text-xs text-[oklch(0.55_0.015_255)] mb-2 block">{label}</Label>
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="bg-[oklch(0.13_0.006_72)] border-[oklch(0.28_0.007_72)] focus:border-[oklch(0.78_0.09_72)]"
+        className="bg-[oklch(0.14_0.025_255)] border-[oklch(0.25_0.04_255)] focus:border-[oklch(0.82_0.16_85)]"
       />
-      {hint && <p className="text-[10px] text-[oklch(0.52_0.005_72)] mt-1.5 leading-relaxed">{hint}</p>}
+      {hint && <p className="text-[10px] text-[oklch(0.55_0.015_255)] mt-1.5 leading-relaxed">{hint}</p>}
     </div>
   )
 }
@@ -339,7 +339,7 @@ function CheckOption({ label, checked, onChange }: { label: string; checked: boo
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="w-4 h-4 cursor-pointer accent-[oklch(0.78_0.09_72)]"
+        className="w-4 h-4 cursor-pointer accent-[oklch(0.82_0.16_85)]"
       />
       <span className="text-sm">{label}</span>
     </label>

@@ -1,10 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { CheckCircle, XCircle, DollarSign, Users, TrendingUp, Send, Eye } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import {
+  CheckCircle, XCircle, DollarSign, Users, TrendingUp,
+  Send, Eye, Search, SlidersHorizontal, LogOut,
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BackNav } from '@/components/shared/BackNav'
 
 type DonationStatus = 'pending' | 'confirmed' | 'rejected'
 type BeneficiaryStatus = 'pending' | 'verified' | 'helped' | 'rejected'
@@ -38,10 +42,23 @@ interface Beneficiary {
 }
 
 export default function AdminPage() {
+  const router = useRouter()
   const [donations, setDonations] = useState<Donation[]>([])
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([])
   const [tab, setTab] = useState('donations')
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'amount_desc' | 'name_asc'>('date_desc')
+  const [filterStatus, setFilterStatus] = useState('all')
+
+  useEffect(() => {
+    if (!sessionStorage.getItem('admin-auth')) router.replace('/login')
+  }, [router])
+
+  function handleLogout() {
+    sessionStorage.removeItem('admin-auth')
+    router.push('/login')
+  }
 
   useEffect(() => {
     Promise.all([
@@ -78,23 +95,77 @@ export default function AdminPage() {
     .filter((d) => d.status === 'confirmed')
     .reduce((sum, d) => sum + (d.currency === 'CLP' ? d.amount : 0), 0)
 
-  return (
-    <main className="min-h-dvh flex flex-col pb-10">
-      <BackNav label="Salir" />
+  const filteredDonations = useMemo(() => {
+    const q = search.toLowerCase()
+    let list = donations.filter((d) => {
+      const name = (d.isAnonymous ? 'anónimo' : d.donor ?? '').toLowerCase()
+      const matchSearch = !q || name.includes(q) || d.channel.toLowerCase().includes(q) || d.createdAt.includes(q)
+      const matchStatus = filterStatus === 'all' || d.status === filterStatus
+      return matchSearch && matchStatus
+    })
+    if (sortBy === 'date_desc')   list = [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    if (sortBy === 'date_asc')    list = [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    if (sortBy === 'amount_desc') list = [...list].sort((a, b) => b.amount - a.amount)
+    if (sortBy === 'name_asc')    list = [...list].sort((a, b) => (a.donor ?? '').localeCompare(b.donor ?? ''))
+    return list
+  }, [donations, search, sortBy, filterStatus])
 
-      <div className="flex-1 px-5 pt-28 max-w-5xl mx-auto w-full">
+  const filteredBeneficiaries = useMemo(() => {
+    const q = search.toLowerCase()
+    let list = beneficiaries.filter((b) => {
+      const name = `${b.firstName} ${b.lastName}`.toLowerCase()
+      const matchSearch = !q || name.includes(q) || b.state.toLowerCase().includes(q) || b.phone.includes(q)
+      const matchStatus = filterStatus === 'all' || b.status === filterStatus
+      return matchSearch && matchStatus
+    })
+    if (sortBy === 'date_desc') list = [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    if (sortBy === 'date_asc')  list = [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    if (sortBy === 'name_asc')  list = [...list].sort((a, b) => a.firstName.localeCompare(b.firstName))
+    return list
+  }, [beneficiaries, search, sortBy, filterStatus])
+
+  return (
+    <div className="min-h-dvh bg-background text-foreground">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
+        <div className="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="font-display font-bold text-xl tracking-wide text-primary">Puente VE</span>
+            <span className="hidden sm:block text-xs text-muted-foreground border border-border rounded-full px-2.5 py-0.5">Admin</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {(pendingDonations + pendingBeneficiaries) > 0 && (
+              <span className="text-xs bg-destructive/15 text-destructive border border-destructive/30 rounded-full px-2.5 py-0.5 font-medium">
+                {pendingDonations + pendingBeneficiaries} pendientes
+              </span>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-xs text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-all cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Cerrar sesión</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-5 py-8">
+        {/* Page title */}
         <div className="mb-8">
-          <h1 className="font-display font-bold text-4xl uppercase">Panel Admin</h1>
-          <p className="text-[oklch(0.52_0.005_72)] mt-1 text-sm">Puente VE · Gestión del fondo solidario</p>
+          <h1 className="font-display font-bold text-4xl md:text-5xl uppercase tracking-tight">
+            Panel de gestión
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">Fondo solidario · revisión y aprobación de registros</p>
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           <KpiCard
             label="Total confirmado"
             value={`$${confirmedTotal.toLocaleString('es-CL')}`}
             sub="CLP verificado"
-            color="gold"
+            variant="primary"
             icon={<DollarSign className="w-4 h-4" />}
           />
           <KpiCard
@@ -112,56 +183,106 @@ export default function AdminPage() {
           <KpiCard
             label="Pendientes"
             value={String(pendingDonations + pendingBeneficiaries)}
-            sub="acciones requeridas"
-            color="warning"
+            sub="requieren acción"
+            variant="warning"
             icon={<TrendingUp className="w-4 h-4" />}
           />
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 rounded-full border-2 border-[oklch(0.78_0.09_72)] border-t-transparent animate-spin" />
+          <div className="flex items-center justify-center py-24">
+            <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           </div>
         ) : (
           <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="bg-[oklch(0.13_0.006_72)] border border-[oklch(0.28_0.007_72)] mb-6 w-full">
-              <TabsTrigger value="donations" className="flex-1 data-[state=active]:bg-[oklch(0.78_0.09_72)] data-[state=active]:text-[oklch(0.09_0.005_72)] cursor-pointer">
-                Donaciones
-                {pendingDonations > 0 && (
-                  <span className="ml-2 bg-[oklch(0.58_0.22_25)] text-white text-[10px] rounded-full px-1.5 py-0.5">{pendingDonations}</span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="beneficiaries" className="flex-1 data-[state=active]:bg-[oklch(0.78_0.09_72)] data-[state=active]:text-[oklch(0.09_0.005_72)] cursor-pointer">
-                Beneficiarios
-                {pendingBeneficiaries > 0 && (
-                  <span className="ml-2 bg-[oklch(0.58_0.22_25)] text-white text-[10px] rounded-full px-1.5 py-0.5">{pendingBeneficiaries}</span>
-                )}
-              </TabsTrigger>
-            </TabsList>
+            {/* Tabs + search row */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-5">
+              <TabsList className="h-10 bg-muted border border-border shrink-0">
+                <TabsTrigger
+                  value="donations"
+                  className="h-full text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer gap-1.5"
+                >
+                  Donaciones
+                  {pendingDonations > 0 && (
+                    <span className="bg-destructive text-white text-[10px] rounded-full px-1.5 py-px leading-none">{pendingDonations}</span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="beneficiaries"
+                  className="h-full text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground cursor-pointer gap-1.5"
+                >
+                  Beneficiarios
+                  {pendingBeneficiaries > 0 && (
+                    <span className="bg-destructive text-white text-[10px] rounded-full px-1.5 py-px leading-none">{pendingBeneficiaries}</span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="donations" className="space-y-3">
-              {donations.length === 0 && (
-                <p className="text-center text-[oklch(0.52_0.005_72)] py-12 text-sm">No hay donaciones aún.</p>
+              <div className="flex gap-2 flex-1">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar nombre, canal, teléfono…"
+                    className="h-10 pl-9 bg-card border-border text-sm placeholder:text-muted-foreground"
+                  />
+                </div>
+                <div className="relative shrink-0">
+                  <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="h-10 pl-8 pr-3 rounded-lg bg-card border border-border text-sm text-foreground cursor-pointer appearance-none focus:outline-none focus:border-primary/60"
+                  >
+                    <option value="date_desc">Más reciente</option>
+                    <option value="date_asc">Más antiguo</option>
+                    <option value="amount_desc">Mayor monto</option>
+                    <option value="name_asc">Nombre A–Z</option>
+                  </select>
+                </div>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="h-10 px-3 rounded-lg bg-card border border-border text-sm text-foreground cursor-pointer appearance-none focus:outline-none focus:border-primary/60 shrink-0"
+                >
+                  <option value="all">Todos</option>
+                  <option value="pending">Pendientes</option>
+                  <option value="confirmed">Confirmados</option>
+                  <option value="verified">Verificados</option>
+                  <option value="helped">Ayudados</option>
+                  <option value="rejected">Rechazados</option>
+                </select>
+              </div>
+            </div>
+
+            <TabsContent value="donations">
+              {filteredDonations.length === 0 && (
+                <EmptyState text={search || filterStatus !== 'all' ? 'Sin resultados para los filtros aplicados.' : 'No hay donaciones aún.'} />
               )}
-              {(['pending', 'confirmed', 'rejected'] as DonationStatus[]).map((statusGroup) => {
-                const group = donations.filter((d) => d.status === statusGroup)
+              {(['pending', 'confirmed', 'rejected'] as DonationStatus[]).map((sg) => {
+                const group = filteredDonations.filter((d) => d.status === sg)
                 if (!group.length) return null
                 const labels = { pending: 'Por verificar', confirmed: 'Confirmadas', rejected: 'Rechazadas' }
                 return (
-                  <div key={statusGroup}>
-                    <p className="text-xs uppercase tracking-widest text-[oklch(0.52_0.005_72)] mb-3 mt-4">{labels[statusGroup]}</p>
-                    {group.map((d) => <DonationRow key={d.id} donation={d} onUpdate={updateDonation} />)}
+                  <div key={sg} className="mb-6">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                      {labels[sg]} <span className="text-primary">({group.length})</span>
+                    </p>
+                    <div className="space-y-2">
+                      {group.map((d) => <DonationRow key={d.id} donation={d} onUpdate={updateDonation} />)}
+                    </div>
                   </div>
                 )
               })}
             </TabsContent>
 
-            <TabsContent value="beneficiaries" className="space-y-3">
-              {beneficiaries.length === 0 && (
-                <p className="text-center text-[oklch(0.52_0.005_72)] py-12 text-sm">No hay solicitudes aún.</p>
+            <TabsContent value="beneficiaries">
+              {filteredBeneficiaries.length === 0 && (
+                <EmptyState text={search || filterStatus !== 'all' ? 'Sin resultados para los filtros aplicados.' : 'No hay solicitudes aún.'} />
               )}
-              {(['pending', 'verified', 'helped', 'rejected'] as BeneficiaryStatus[]).map((statusGroup) => {
-                const group = beneficiaries.filter((b) => b.status === statusGroup)
+              {(['pending', 'verified', 'helped', 'rejected'] as BeneficiaryStatus[]).map((sg) => {
+                const group = filteredBeneficiaries.filter((b) => b.status === sg)
                 if (!group.length) return null
                 const labels = {
                   pending: 'Por verificar',
@@ -170,57 +291,66 @@ export default function AdminPage() {
                   rejected: 'Rechazados',
                 }
                 return (
-                  <div key={statusGroup}>
-                    <p className="text-xs uppercase tracking-widest text-[oklch(0.52_0.005_72)] mb-3 mt-4">{labels[statusGroup]}</p>
-                    {group.map((b) => <BeneficiaryRow key={b.id} beneficiary={b} onUpdate={updateBeneficiary} />)}
+                  <div key={sg} className="mb-6">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                      {labels[sg]} <span className="text-primary">({group.length})</span>
+                    </p>
+                    <div className="space-y-2">
+                      {group.map((b) => <BeneficiaryRow key={b.id} beneficiary={b} onUpdate={updateBeneficiary} />)}
+                    </div>
                   </div>
                 )
               })}
             </TabsContent>
           </Tabs>
         )}
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }
 
 function DonationRow({ donation: d, onUpdate }: { donation: Donation; onUpdate: (id: string, s: DonationStatus) => void }) {
   const displayName = d.isAnonymous ? 'Anónimo' : (d.donor ?? 'Sin nombre')
-  const date = new Date(d.createdAt).toLocaleDateString('es-CL')
+  const date = new Date(d.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className={`rounded-2xl border p-4 mb-3 transition-all ${
-      d.status === 'pending'   ? 'border-[oklch(0.75_0.15_70/0.4)] bg-[oklch(0.75_0.15_70/0.04)]'
-      : d.status === 'confirmed' ? 'border-[oklch(0.28_0.007_72)] bg-[oklch(0.13_0.006_72)]'
-      : 'border-[oklch(0.28_0.007_72)] bg-[oklch(0.13_0.006_72)] opacity-50'
+    <div className={`rounded-xl border p-4 transition-colors ${
+      d.status === 'pending'
+        ? 'border-warning/40 bg-warning/5'
+        : d.status === 'confirmed'
+        ? 'border-border bg-card'
+        : 'border-border bg-card opacity-50'
     }`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm">{displayName}</span>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="font-semibold text-sm text-foreground">{displayName}</span>
             <StatusBadge status={d.status} />
+            <span className="text-xs text-muted-foreground">{d.channel}</span>
           </div>
-          <p className="font-score text-2xl text-[oklch(0.78_0.09_72)] mt-1 tabular">
+          <p className="font-score text-2xl text-primary tabular-nums">
             {d.currency === 'CLP' ? `$${d.amount.toLocaleString('es-CL')}` : `${d.currency} ${d.amount}`}
           </p>
-          <p className="text-xs text-[oklch(0.52_0.005_72)] mt-1">{d.channel} · {date}</p>
-          {d.message && <p className="text-xs text-[oklch(0.52_0.005_72)] italic mt-1">"{d.message}"</p>}
+          <p className="text-xs text-muted-foreground mt-0.5">{date}</p>
+          {d.message && <p className="text-xs text-muted-foreground italic mt-1">"{d.message}"</p>}
         </div>
-        <div className="flex flex-col gap-2 flex-shrink-0">
+        <div className="flex flex-col gap-1.5 shrink-0">
           {d.status === 'pending' && (
             <>
-              <Button size="sm" onClick={() => onUpdate(d.id, 'confirmed')} className="bg-[oklch(0.64_0.17_145)] hover:bg-[oklch(0.58_0.17_145)] text-white text-xs h-8 cursor-pointer">
-                <CheckCircle className="w-3 h-3 mr-1" /> Confirmar
+              <Button size="sm" onClick={() => onUpdate(d.id, 'confirmed')}
+                className="bg-success hover:bg-success/90 text-white text-xs h-8 cursor-pointer">
+                <CheckCircle className="w-3 h-3 mr-1" />Confirmar
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onUpdate(d.id, 'rejected')} className="border-[oklch(0.58_0.22_25/0.4)] text-[oklch(0.58_0.22_25)] hover:bg-[oklch(0.58_0.22_25/0.1)] text-xs h-8 cursor-pointer">
-                <XCircle className="w-3 h-3 mr-1" /> Rechazar
+              <Button size="sm" variant="outline" onClick={() => onUpdate(d.id, 'rejected')}
+                className="border-destructive/40 text-destructive hover:bg-destructive/10 text-xs h-8 cursor-pointer">
+                <XCircle className="w-3 h-3 mr-1" />Rechazar
               </Button>
             </>
           )}
           {d.proofUrl && (
             <a href={d.proofUrl} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="ghost" className="text-xs h-8 cursor-pointer text-[oklch(0.52_0.005_72)]">
-                <Eye className="w-3 h-3 mr-1" /> Comprobante
+              <Button size="sm" variant="ghost" className="text-xs h-8 cursor-pointer text-muted-foreground hover:text-foreground">
+                <Eye className="w-3 h-3 mr-1" />Comprobante
               </Button>
             </a>
           )}
@@ -231,46 +361,49 @@ function DonationRow({ donation: d, onUpdate }: { donation: Donation; onUpdate: 
 }
 
 function BeneficiaryRow({ beneficiary: b, onUpdate }: { beneficiary: Beneficiary; onUpdate: (id: string, s: BeneficiaryStatus) => void }) {
-  const date = new Date(b.createdAt).toLocaleDateString('es-CL')
+  const date = new Date(b.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className={`rounded-2xl border p-4 mb-3 transition-all ${
-      b.status === 'pending'  ? 'border-[oklch(0.75_0.15_70/0.4)] bg-[oklch(0.75_0.15_70/0.04)]'
-      : b.status === 'verified' ? 'border-[oklch(0.62_0.18_255/0.3)] bg-[oklch(0.62_0.18_255/0.04)]'
-      : b.status === 'helped'   ? 'border-[oklch(0.64_0.17_145/0.3)] bg-[oklch(0.64_0.17_145/0.04)]'
-      : 'border-[oklch(0.28_0.007_72)] bg-[oklch(0.13_0.006_72)] opacity-50'
+    <div className={`rounded-xl border p-4 transition-colors ${
+      b.status === 'pending'  ? 'border-warning/40 bg-warning/5'
+      : b.status === 'verified' ? 'border-info/30 bg-info/5'
+      : b.status === 'helped'   ? 'border-success/30 bg-success/5'
+      : 'border-border bg-card opacity-50'
     }`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm">{b.firstName} {b.lastName}</span>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="font-semibold text-sm text-foreground">{b.firstName} {b.lastName}</span>
             <StatusBadge status={b.status} />
-            {b.hasMinors && <span className="text-[10px] bg-[oklch(0.62_0.18_255/0.15)] text-[oklch(0.62_0.18_255)] px-1.5 py-0.5 rounded-full">menores</span>}
-            {b.hasElders && <span className="text-[10px] bg-[oklch(0.75_0.15_70/0.15)] text-[oklch(0.75_0.15_70)] px-1.5 py-0.5 rounded-full">adultos mayores</span>}
+            {b.hasMinors && <span className="text-[10px] bg-info/15 text-info border border-info/25 px-1.5 py-0.5 rounded-full">menores</span>}
+            {b.hasElders && <span className="text-[10px] bg-warning/15 text-warning border border-warning/25 px-1.5 py-0.5 rounded-full">adultos mayores</span>}
           </div>
-          <p className="text-xs text-[oklch(0.52_0.005_72)] mt-1">{b.situation} · {b.householdSize} personas</p>
-          <p className="text-xs text-[oklch(0.52_0.005_72)]">{b.state} · {date}</p>
-          <p className="text-xs text-[oklch(0.52_0.005_72)]">{b.cedula ?? 'Sin cédula'} · {b.phone}</p>
+          <p className="text-xs text-muted-foreground">{b.state} · {b.householdSize} personas · {b.situation}</p>
+          <p className="text-xs text-muted-foreground">{b.cedula ?? 'Sin cédula'} · {b.phone}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{date}</p>
         </div>
-        <div className="flex flex-col gap-2 flex-shrink-0">
+        <div className="flex flex-col gap-1.5 shrink-0">
           {b.status === 'pending' && (
             <>
-              <Button size="sm" onClick={() => onUpdate(b.id, 'verified')} className="bg-[oklch(0.62_0.18_255)] hover:bg-[oklch(0.55_0.18_255)] text-white text-xs h-8 cursor-pointer">
-                <CheckCircle className="w-3 h-3 mr-1" /> Verificar
+              <Button size="sm" onClick={() => onUpdate(b.id, 'verified')}
+                className="bg-info hover:bg-info/90 text-white text-xs h-8 cursor-pointer">
+                <CheckCircle className="w-3 h-3 mr-1" />Verificar
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onUpdate(b.id, 'rejected')} className="border-[oklch(0.58_0.22_25/0.4)] text-[oklch(0.58_0.22_25)] hover:bg-[oklch(0.58_0.22_25/0.1)] text-xs h-8 cursor-pointer">
-                <XCircle className="w-3 h-3 mr-1" /> Rechazar
+              <Button size="sm" variant="outline" onClick={() => onUpdate(b.id, 'rejected')}
+                className="border-destructive/40 text-destructive hover:bg-destructive/10 text-xs h-8 cursor-pointer">
+                <XCircle className="w-3 h-3 mr-1" />Rechazar
               </Button>
             </>
           )}
           {b.status === 'verified' && (
-            <Button size="sm" onClick={() => onUpdate(b.id, 'helped')} className="bg-[oklch(0.78_0.09_72)] text-[oklch(0.09_0.005_72)] hover:bg-[oklch(0.84_0.08_72)] text-xs h-8 cursor-pointer">
-              <Send className="w-3 h-3 mr-1" /> Ayuda enviada
+            <Button size="sm" onClick={() => onUpdate(b.id, 'helped')}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8 cursor-pointer">
+              <Send className="w-3 h-3 mr-1" />Ayuda enviada
             </Button>
           )}
           {b.status === 'helped' && (
-            <span className="text-xs text-[oklch(0.64_0.17_145)] flex items-center gap-1">
-              <CheckCircle className="w-3 h-3" /> Completado
+            <span className="text-xs text-success flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" />Completado
             </span>
           )}
         </div>
@@ -279,33 +412,41 @@ function BeneficiaryRow({ beneficiary: b, onUpdate }: { beneficiary: Beneficiary
   )
 }
 
-function KpiCard({ label, value, sub, color, icon }: {
-  label: string; value: string; sub: string; color?: 'gold' | 'warning'; icon: React.ReactNode
+function KpiCard({ label, value, sub, variant, icon }: {
+  label: string; value: string; sub: string; variant?: 'primary' | 'warning'; icon: React.ReactNode
 }) {
   return (
-    <div className={`rounded-2xl border p-4 ${
-      color === 'gold'    ? 'border-[oklch(0.78_0.09_72/0.4)] bg-[oklch(0.78_0.09_72/0.06)]'
-      : color === 'warning' ? 'border-[oklch(0.75_0.15_70/0.3)] bg-[oklch(0.75_0.15_70/0.05)]'
-      : 'border-[oklch(0.28_0.007_72)] bg-[oklch(0.13_0.006_72)]'
+    <div className={`rounded-xl border p-4 ${
+      variant === 'primary' ? 'border-primary/30 bg-primary/8'
+      : variant === 'warning' ? 'border-warning/30 bg-warning/5'
+      : 'border-border bg-card'
     }`}>
-      <div className={`mb-2 ${color === 'gold' ? 'text-[oklch(0.78_0.09_72)]' : color === 'warning' ? 'text-[oklch(0.75_0.15_70)]' : 'text-[oklch(0.52_0.005_72)]'}`}>
+      <div className={`mb-2 ${variant === 'primary' ? 'text-primary' : variant === 'warning' ? 'text-warning' : 'text-muted-foreground'}`}>
         {icon}
       </div>
-      <p className={`font-score text-2xl tabular ${color === 'gold' ? 'text-[oklch(0.78_0.09_72)]' : 'text-foreground'}`}>{value}</p>
-      <p className="text-[10px] text-[oklch(0.52_0.005_72)] mt-0.5 leading-snug">{label}</p>
-      <p className="text-[10px] text-[oklch(0.52_0.005_72)] opacity-60">{sub}</p>
+      <p className={`font-score text-2xl tabular-nums ${variant === 'primary' ? 'text-primary' : 'text-foreground'}`}>{value}</p>
+      <p className="text-xs font-medium text-foreground mt-0.5">{label}</p>
+      <p className="text-[11px] text-muted-foreground">{sub}</p>
     </div>
   )
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const configs: Record<string, { label: string; color: string }> = {
-    pending:   { label: 'Pendiente',  color: 'bg-[oklch(0.75_0.15_70/0.15)] text-[oklch(0.75_0.15_70)] border-[oklch(0.75_0.15_70/0.3)]' },
-    confirmed: { label: 'Confirmada', color: 'bg-[oklch(0.64_0.17_145/0.15)] text-[oklch(0.64_0.17_145)] border-[oklch(0.64_0.17_145/0.3)]' },
-    rejected:  { label: 'Rechazada',  color: 'bg-[oklch(0.58_0.22_25/0.15)] text-[oklch(0.58_0.22_25)] border-[oklch(0.58_0.22_25/0.3)]' },
-    verified:  { label: 'Verificado', color: 'bg-[oklch(0.62_0.18_255/0.15)] text-[oklch(0.62_0.18_255)] border-[oklch(0.62_0.18_255/0.3)]' },
-    helped:    { label: 'Ayudado',    color: 'bg-[oklch(0.64_0.17_145/0.15)] text-[oklch(0.64_0.17_145)] border-[oklch(0.64_0.17_145/0.3)]' },
+  const configs: Record<string, { label: string; cls: string }> = {
+    pending:   { label: 'Pendiente',  cls: 'bg-warning/15 text-warning border-warning/30' },
+    confirmed: { label: 'Confirmada', cls: 'bg-success/15 text-success border-success/30' },
+    rejected:  { label: 'Rechazada',  cls: 'bg-destructive/15 text-destructive border-destructive/30' },
+    verified:  { label: 'Verificado', cls: 'bg-info/15 text-info border-info/30' },
+    helped:    { label: 'Ayudado',    cls: 'bg-success/15 text-success border-success/30' },
   }
-  const c = configs[status] ?? { label: status, color: '' }
-  return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${c.color}`}>{c.label}</span>
+  const c = configs[status] ?? { label: status, cls: 'bg-muted text-muted-foreground border-border' }
+  return (
+    <span className={`text-[10px] font-semibold px-2 py-px rounded-full border ${c.cls}`}>{c.label}</span>
+  )
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="text-center py-16 text-muted-foreground text-sm">{text}</div>
+  )
 }

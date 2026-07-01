@@ -4,26 +4,41 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ─── Brand Tokens ─── */
+/* ─── Brand Tokens — Paleta Venezuela ─── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-info:    var(--color-info);
   --font-sans: var(--font-geist);
   --font-display: var(--font-barlow);
   --font-score: var(--font-bebas);
   --font-mono: var(--font-geist-mono);
 
-  /* Gold */
-  --color-gold-300: oklch(0.84 0.08 72);
-  --color-gold-400: oklch(0.78 0.09 72);
-  --color-gold-500: oklch(0.72 0.10 72);
-  --color-gold-600: oklch(0.55 0.08 72);
+  /* Amarillo venezolano — bandera, sobrio */
+  --color-ve-yellow-300: oklch(0.90 0.14 85);
+  --color-ve-yellow-400: oklch(0.82 0.16 85);
+  --color-ve-yellow-500: oklch(0.72 0.15 85);
+  --color-ve-yellow-600: oklch(0.58 0.13 85);
 
-  /* Semantic */
+  /* Azul venezolano — bandera */
+  --color-ve-blue-400: oklch(0.55 0.18 255);
+  --color-ve-blue-600: oklch(0.38 0.15 255);
+
+  /* Rojo venezolano — solo semántico */
+  --color-ve-red: oklch(0.52 0.20 25);
+
+  /* Semánticos — dark mode */
   --color-success: oklch(0.64 0.17 145);
-  --color-error:   oklch(0.58 0.22 25);
-  --color-warning: oklch(0.75 0.15 70);
-  --color-info:    oklch(0.62 0.18 255);
+  --color-error:   oklch(0.52 0.20 25);
+  --color-warning: oklch(0.72 0.14 70);
+  --color-info:    oklch(0.55 0.18 255);
+
+  /* Aliases para Tailwind (text-success, bg-success, etc.) */
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --info:    var(--color-info);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -46,7 +61,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
+  --color-popover: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --radius-sm: calc(var(--radius) * 0.6);
@@ -55,67 +70,73 @@
   --radius-xl: calc(var(--radius) * 1.4);
 }
 
-/* ─── Dark Mode (default) ─── */
+/* ─── Dark Mode — Navy Venezuela (default) ─── */
 :root {
-  --background:        oklch(0.09 0.005 72);
-  --foreground:        oklch(0.96 0.003 72);
-  --card:              oklch(0.13 0.006 72);
-  --card-foreground:   oklch(0.96 0.003 72);
-  --popover:           oklch(0.13 0.006 72);
-  --popover-foreground: oklch(0.96 0.003 72);
-  --primary:           oklch(0.78 0.09 72);
-  --primary-foreground: oklch(0.09 0.005 72);
-  --secondary:         oklch(0.17 0.007 72);
-  --secondary-foreground: oklch(0.96 0.003 72);
-  --muted:             oklch(0.17 0.007 72);
-  --muted-foreground:  oklch(0.52 0.005 72);
-  --accent:            oklch(0.78 0.09 72 / 0.15);
-  --accent-foreground: oklch(0.78 0.09 72);
-  --destructive:       oklch(0.58 0.22 25);
-  --border:            oklch(0.28 0.007 72);
-  --input:             oklch(0.17 0.007 72);
-  --ring:              oklch(0.78 0.09 72 / 0.4);
+  /* Fondo: azul marino profundo, bandera venezolana oscurecida */
+  --background:        oklch(0.10 0.025 255);
+  --foreground:        oklch(0.96 0.005 85);
+  --card:              oklch(0.14 0.025 255);
+  --card-foreground:   oklch(0.96 0.005 85);
+  --popover:           oklch(0.14 0.025 255);
+  --popover-foreground: oklch(0.96 0.005 85);
+
+  /* Primario: amarillo venezolano */
+  --primary:           oklch(0.82 0.16 85);
+  --primary-foreground: oklch(0.10 0.025 255);
+
+  --secondary:         oklch(0.18 0.03 255);
+  --secondary-foreground: oklch(0.96 0.005 85);
+  --muted:             oklch(0.18 0.03 255);
+  --muted-foreground:  oklch(0.55 0.015 255);
+  --accent:            oklch(0.82 0.16 85 / 0.12);
+  --accent-foreground: oklch(0.82 0.16 85);
+  --destructive:       oklch(0.52 0.20 25);
+  --border:            oklch(0.25 0.04 255);
+  --input:             oklch(0.18 0.03 255);
+  --ring:              oklch(0.82 0.16 85 / 0.4);
   --radius:            0.75rem;
 
-  --sidebar:                   oklch(0.13 0.006 72);
-  --sidebar-foreground:        oklch(0.96 0.003 72);
-  --sidebar-primary:           oklch(0.78 0.09 72);
-  --sidebar-primary-foreground: oklch(0.09 0.005 72);
-  --sidebar-accent:            oklch(0.17 0.007 72);
-  --sidebar-accent-foreground: oklch(0.96 0.003 72);
-  --sidebar-border:            oklch(0.28 0.007 72);
-  --sidebar-ring:              oklch(0.78 0.09 72 / 0.4);
+  --sidebar:                   oklch(0.14 0.025 255);
+  --sidebar-foreground:        oklch(0.96 0.005 85);
+  --sidebar-primary:           oklch(0.82 0.16 85);
+  --sidebar-primary-foreground: oklch(0.10 0.025 255);
+  --sidebar-accent:            oklch(0.18 0.03 255);
+  --sidebar-accent-foreground: oklch(0.96 0.005 85);
+  --sidebar-border:            oklch(0.25 0.04 255);
+  --sidebar-ring:              oklch(0.82 0.16 85 / 0.4);
 }
 
 /* ─── Light Mode ─── */
+/* Primary = azul marino venezolano. Contraste ~9:1 sobre blanco. */
+/* El amarillo solo aparece como acento decorativo, nunca como texto. */
 .light {
-  --background:        oklch(0.97 0.005 72);
-  --foreground:        oklch(0.13 0.006 72);
-  --card:              oklch(0.99 0.002 72);
-  --card-foreground:   oklch(0.13 0.006 72);
-  --popover:           oklch(0.99 0.002 72);
-  --popover-foreground: oklch(0.13 0.006 72);
-  --primary:           oklch(0.55 0.08 72);
-  --primary-foreground: oklch(0.99 0.002 72);
-  --secondary:         oklch(0.92 0.009 72);
-  --secondary-foreground: oklch(0.13 0.006 72);
-  --muted:             oklch(0.92 0.009 72);
-  --muted-foreground:  oklch(0.58 0.007 72);
-  --accent:            oklch(0.55 0.08 72 / 0.1);
-  --accent-foreground: oklch(0.55 0.08 72);
-  --destructive:       oklch(0.58 0.22 25);
-  --border:            oklch(0.85 0.009 72);
-  --input:             oklch(0.92 0.009 72);
-  --ring:              oklch(0.55 0.08 72 / 0.3);
+  --background:         oklch(0.97 0.006 255);   /* blanco azulado muy suave */
+  --foreground:         oklch(0.13 0.025 255);   /* casi negro, tintado navy */
+  --card:               oklch(1.00 0.000 0);     /* blanco puro para cards */
+  --card-foreground:    oklch(0.13 0.025 255);
+  --popover:            oklch(1.00 0.000 0);
+  --popover-foreground: oklch(0.13 0.025 255);
 
-  --sidebar:                   oklch(0.99 0.002 72);
-  --sidebar-foreground:        oklch(0.13 0.006 72);
-  --sidebar-primary:           oklch(0.55 0.08 72);
-  --sidebar-primary-foreground: oklch(0.99 0.002 72);
-  --sidebar-accent:            oklch(0.92 0.009 72);
-  --sidebar-accent-foreground: oklch(0.13 0.006 72);
-  --sidebar-border:            oklch(0.85 0.009 72);
-  --sidebar-ring:              oklch(0.55 0.08 72 / 0.3);
+  /* Primario: azul marino — ratio ~9:1 sobre blanco ✓ WCAG AAA */
+  --primary:            oklch(0.32 0.16 255);
+  --primary-foreground: oklch(0.97 0.006 255);
+
+  --secondary:          oklch(0.92 0.01 255);
+  --secondary-foreground: oklch(0.13 0.025 255);
+  --muted:              oklch(0.93 0.008 255);
+  --muted-foreground:   oklch(0.46 0.02 255);    /* ratio ~5:1 ✓ WCAG AA */
+  --accent:             oklch(0.32 0.16 255 / 0.08);
+  --accent-foreground:  oklch(0.32 0.16 255);
+  --destructive:        oklch(0.46 0.22 25);
+  --border:             oklch(0.88 0.012 255);
+  --input:              oklch(0.93 0.008 255);
+  --ring:               oklch(0.32 0.16 255 / 0.35);
+
+  /* Semánticos WCAG AA sobre fondo claro */
+  --color-success:      oklch(0.42 0.17 145);
+  --color-error:        oklch(0.46 0.22 25);
+  --color-warning:      oklch(0.46 0.14 55);
+  --color-info:         oklch(0.38 0.18 255);
 }
 
 /* ─── Typography Scale ─── */
@@ -166,19 +187,26 @@
   }
 }
 
-/* ─── Utility classes ─── */
+/* ─── Utilities ─── */
 @layer utilities {
   .font-display  { font-family: var(--font-display), var(--font-sans); }
   .font-score    { font-family: var(--font-score), var(--font-sans); }
 
   .glass-card {
-    background: oklch(1 0 0 / 0.05);
-    backdrop-filter: blur(12px);
-    border: 1px solid oklch(1 0 0 / 0.1);
+    background: oklch(0.10 0.025 255 / 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid oklch(1 0 0 / 0.10);
   }
 
-  .gold-glow {
-    box-shadow: 0 0 24px oklch(0.78 0.09 72 / 0.35);
+  /* En light mode: fondo blanco semitransparente con sombra */
+  :root.light .glass-card {
+    background: oklch(1 0 0 / 0.85);
+    border: 1px solid oklch(0.88 0.012 255);
+    box-shadow: 0 4px 24px oklch(0.13 0.025 255 / 0.08);
+  }
+
+  .ve-glow {
+    box-shadow: 0 0 28px oklch(0.82 0.16 85 / 0.25);
   }
 
   .tabular { font-variant-numeric: tabular-nums; }
@@ -189,7 +217,7 @@
   }
   .interactive-card:hover {
     transform: scale(1.02);
-    box-shadow: 0 8px 32px oklch(0.78 0.09 72 / 0.2);
+    box-shadow: 0 8px 32px oklch(0.82 0.16 85 / 0.15);
   }
   .interactive-card:active {
     transform: scale(0.98);
