@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "rm -rf src/lib/prisma.ts src/generated",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
