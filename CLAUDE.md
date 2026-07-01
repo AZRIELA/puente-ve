@@ -40,7 +40,8 @@ client before building so it can never sneak into the bundle. **Do not import Pr
 add queries as raw SQL against `db.execute(...)`.
 
 **Middleware lives in `src/proxy.ts`, not `middleware.ts`.** This Next.js version renamed the
-middleware convention to `proxy.ts` (it still exports `middleware` and `config`). See AGENTS.md —
+middleware convention to `proxy.ts`, and the exported handler function must be named `proxy`
+(or be a default export) — not `middleware`, or Turbopack fails the build. It still exports `config`. See AGENTS.md —
 APIs differ from older Next.js; check `node_modules/next/dist/docs/` before writing Next-specific code.
 
 **Auth is a demo placeholder, not real security.** Admin login (`src/app/login/page.tsx`) compares
