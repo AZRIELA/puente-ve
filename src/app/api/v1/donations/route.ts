@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { createId } from '@paralleldrive/cuid2'
 
-export async function GET() {
+import { verifyAdminRequest } from '@/lib/auth'
+
+export async function GET(req: NextRequest) {
+  if (!(await verifyAdminRequest(req))) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
   const result = await db.execute('SELECT * FROM Donation ORDER BY createdAt DESC')
   return NextResponse.json(result.rows)
 }

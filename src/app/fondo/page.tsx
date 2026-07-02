@@ -29,23 +29,31 @@ interface Beneficiary {
 }
 
 export default function FondoPage() {
-  const [donations, setDonations] = useState<Donation[]>([])
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([])
+  const [stats, setStats] = useState<{
+    totalCLP: number
+    totalUSD: number
+    donationsCount: number
+    registeredCount: number
+    helpedCount: number
+    confirmedDonations: Donation[]
+    helpedFamilies: Beneficiary[]
+  } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/v1/donations').then((r) => r.json()),
-      fetch('/api/v1/beneficiaries').then((r) => r.json()),
-    ]).then(([d, b]) => {
-      setDonations(d)
-      setBeneficiaries(b)
-    }).finally(() => setLoading(false))
+    fetch('/api/v1/public-stats')
+      .then((r) => r.json())
+      .then((data) => setStats(data))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false))
   }, [])
 
-  const confirmed = donations.filter((d) => d.status === 'confirmed')
-  const totalCLP = confirmed.reduce((s, d) => s + (d.currency === 'CLP' ? d.amount : 0), 0)
-  const helped = beneficiaries.filter((b) => b.status === 'helped').length
+  const totalCLP = stats?.totalCLP ?? 0
+  const donationsCount = stats?.donationsCount ?? 0
+  const helped = stats?.helpedCount ?? 0
+  const registeredCount = stats?.registeredCount ?? 0
+  const confirmed = stats?.confirmedDonations ?? []
+  const helpedFamilies = stats?.helpedFamilies ?? []
 
   return (
     <main className="min-h-dvh flex flex-col pb-12">
@@ -75,7 +83,7 @@ export default function FondoPage() {
               </div>
               <div className="rounded-2xl border border-[oklch(0.25_0.04_255)] bg-[oklch(0.14_0.025_255)] p-5">
                 <Users className="w-4 h-4 text-[oklch(0.55_0.015_255)] mb-2" />
-                <p className="font-score text-3xl tabular-nums">{donations.length}</p>
+                <p className="font-score text-3xl tabular-nums">{donationsCount}</p>
                 <p className="text-xs text-[oklch(0.55_0.015_255)] mt-1">donaciones recibidas</p>
               </div>
               <div className="rounded-2xl border border-[oklch(0.25_0.04_255)] bg-[oklch(0.14_0.025_255)] p-5">
@@ -85,7 +93,7 @@ export default function FondoPage() {
               </div>
               <div className="rounded-2xl border border-[oklch(0.25_0.04_255)] bg-[oklch(0.14_0.025_255)] p-5">
                 <Clock className="w-4 h-4 text-[oklch(0.55_0.015_255)] mb-2" />
-                <p className="font-score text-3xl tabular-nums">{beneficiaries.length}</p>
+                <p className="font-score text-3xl tabular-nums">{registeredCount}</p>
                 <p className="text-xs text-[oklch(0.55_0.015_255)] mt-1">familias registradas</p>
               </div>
             </div>
@@ -129,7 +137,7 @@ export default function FondoPage() {
                 <p className="text-sm text-[oklch(0.55_0.015_255)]">Estamos procesando las primeras ayudas.</p>
               ) : (
                 <div className="space-y-3">
-                  {beneficiaries.filter((b) => b.status === 'helped').map((b) => (
+                  {helpedFamilies.map((b) => (
                     <div key={b.id} className="flex items-center justify-between rounded-xl border border-[oklch(0.64_0.17_145/0.25)] bg-[oklch(0.64_0.17_145/0.04)] px-4 py-3">
                       <div>
                         <p className="text-sm font-medium">{b.firstName} {b.lastName}</p>

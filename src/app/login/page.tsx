@@ -20,14 +20,23 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 400))
-    if (email === 'admin@puenteve.com' && password === 'PuenteVE2026!') {
-      sessionStorage.setItem('admin-auth', '1')
-      router.push('/admin')
-    } else {
-      setError('Credenciales incorrectas.')
+    try {
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      if (res.ok) {
+        router.push('/admin')
+      } else {
+        const data = await res.json()
+        setError(data.error || 'Credenciales incorrectas.')
+      }
+    } catch {
+      setError('Error al conectar con el servidor.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (

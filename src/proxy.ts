@@ -1,10 +1,24 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { verifyToken } from '@/lib/auth'
+
 const PUBLIC_PATHS = ['/test-gate', '/api/']
 
-export function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  if (pathname.startsWith('/admin')) {
+    const sessionCookie = request.cookies.get('admin-session')?.value
+    console.log('[DEBUG PROXY] path:', pathname, 'hasCookie:', !!sessionCookie)
+    const isValid = sessionCookie ? await verifyToken(sessionCookie) : null
+    console.log('[DEBUG PROXY] isValid:', isValid)
+
+    if (!isValid || isValid.role !== 'admin') {
+      console.log('[DEBUG PROXY] Unauthorized. Redirecting to /login')
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()

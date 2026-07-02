@@ -3,15 +3,40 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   CheckCircle, XCircle, DollarSign, Users, TrendingUp,
-  Send, Eye, Search, SlidersHorizontal, LogOut,
+  Send, Eye, Search, SlidersHorizontal, LogOut, Plus, Edit, Trash2,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 type DonationStatus = 'pending' | 'confirmed' | 'rejected'
 type BeneficiaryStatus = 'pending' | 'verified' | 'helped' | 'rejected'
+
+const VENEZUELA_STATES = [
+  'Caracas (Distrito Capital)', 'Miranda', 'Aragua', 'Carabobo', 'Vargas (La Guaira)',
+  'Anzoátegui', 'Bolívar', 'Zulia', 'Lara', 'Táchira', 'Mérida', 'Falcón',
+  'Monagas', 'Sucre', 'Barinas', 'Portuguesa', 'Cojedes', 'Yaracuy',
+  'Trujillo', 'Nueva Esparta', 'Apure', 'Guárico', 'Delta Amacuro',
+  'Amazonas', 'Otro',
+]
+
+const SITUATIONS = [
+  { id: 'sismo', label: 'Damnificado por el sismo', desc: 'Terremoto del 24 de junio 2026' },
+  { id: 'desplazado', label: 'Persona desplazada', desc: 'Perdí mi hogar y debo reubicarse' },
+  { id: 'sin_acceso', label: 'Sin acceso a agua/comida', desc: 'Crisis humanitaria severa' },
+  { id: 'heridos', label: 'Heridos en el hogar', desc: 'Necesito apoyo médico o medicamentos' },
+]
 
 interface Donation {
   id: string
@@ -32,12 +57,16 @@ interface Beneficiary {
   lastName: string
   cedula: string | null
   state: string
+  city: string | null
   situation: string
   householdSize: string
-  phone: string
-  status: BeneficiaryStatus
   hasMinors: boolean
   hasElders: boolean
+  details: string | null
+  phone: string
+  altPhone: string | null
+  usdtWallet: string | null
+  status: BeneficiaryStatus
   createdAt: string
 }
 
@@ -51,12 +80,135 @@ export default function AdminPage() {
   const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'amount_desc' | 'name_asc'>('date_desc')
   const [filterStatus, setFilterStatus] = useState('all')
 
-  useEffect(() => {
-    if (!sessionStorage.getItem('admin-auth')) router.replace('/login')
-  }, [router])
+  // Dialog and form states
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingBeneficiary, setEditingBeneficiary] = useState<Beneficiary | null>(null)
 
-  function handleLogout() {
-    sessionStorage.removeItem('admin-auth')
+  const [formFirstName, setFormFirstName] = useState('')
+  const [formLastName, setFormLastName] = useState('')
+  const [formCedula, setFormCedula] = useState('')
+  const [formPhone, setFormPhone] = useState('')
+  const [formAltPhone, setFormAltPhone] = useState('')
+  const [formState, setFormState] = useState('')
+  const [formCity, setFormCity] = useState('')
+  const [formSituation, setFormSituation] = useState('')
+  const [formHouseholdSize, setFormHouseholdSize] = useState('')
+  const [formUsdtWallet, setFormUsdtWallet] = useState('')
+  const [formHasMinors, setFormHasMinors] = useState(false)
+  const [formHasElders, setFormHasElders] = useState(false)
+  const [formDetails, setFormDetails] = useState('')
+  const [formStatus, setFormStatus] = useState<BeneficiaryStatus>('pending')
+  const [formSubmitting, setFormSubmitting] = useState(false)
+
+  function handleOpenAdd() {
+    setEditingBeneficiary(null)
+    setFormFirstName('')
+    setFormLastName('')
+    setFormCedula('')
+    setFormPhone('')
+    setFormAltPhone('')
+    setFormState('Caracas (Distrito Capital)')
+    setFormCity('')
+    setFormSituation('sismo')
+    setFormHouseholdSize('1-2')
+    setFormUsdtWallet('')
+    setFormHasMinors(false)
+    setFormHasElders(false)
+    setFormDetails('')
+    setFormStatus('pending')
+    setIsDialogOpen(true)
+  }
+
+  function handleOpenEdit(b: Beneficiary) {
+    setEditingBeneficiary(b)
+    setFormFirstName(b.firstName)
+    setFormLastName(b.lastName)
+    setFormCedula(b.cedula ?? '')
+    setFormPhone(b.phone)
+    setFormAltPhone(b.altPhone ?? '')
+    setFormState(b.state)
+    setFormCity(b.city ?? '')
+    setFormSituation(b.situation)
+    setFormHouseholdSize(b.householdSize)
+    setFormUsdtWallet(b.usdtWallet ?? '')
+    setFormHasMinors(b.hasMinors)
+    setFormHasElders(b.hasElders)
+    setFormDetails(b.details ?? '')
+    setFormStatus(b.status)
+    setIsDialogOpen(true)
+  }
+
+  async function handleFormSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setFormSubmitting(true)
+
+    const payload = {
+      firstName: formFirstName,
+      lastName: formLastName,
+      cedula: formCedula || null,
+      phone: formPhone,
+      altPhone: formAltPhone || null,
+      state: formState,
+      city: formCity || null,
+      situation: formSituation,
+      householdSize: formHouseholdSize,
+      usdtWallet: formUsdtWallet || null,
+      hasMinors: formHasMinors,
+      hasElders: formHasElders,
+      details: formDetails || null,
+      status: formStatus,
+    }
+
+    try {
+      if (editingBeneficiary) {
+        const res = await fetch(`/api/v1/beneficiaries/${editingBeneficiary.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        if (res.ok) {
+          const updated = await res.json()
+          setBeneficiaries((prev) => prev.map((b) => (b.id === editingBeneficiary.id ? { ...b, ...updated } : b)))
+          setIsDialogOpen(false)
+        }
+      } else {
+        const res = await fetch('/api/v1/beneficiaries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        if (res.ok) {
+          const r = await fetch('/api/v1/beneficiaries')
+          if (r.ok) {
+            setBeneficiaries(await r.json())
+          }
+          setIsDialogOpen(false)
+        }
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setFormSubmitting(false)
+    }
+  }
+
+  async function handleDeleteBeneficiary(id: string) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este beneficiario permanentemente?')) return
+
+    try {
+      const res = await fetch(`/api/v1/beneficiaries/${id}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        setBeneficiaries((prev) => prev.filter((b) => b.id !== id))
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  async function handleLogout() {
+    await fetch('/api/v1/auth/logout', { method: 'POST' })
     router.push('/login')
   }
 
@@ -278,6 +430,14 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="beneficiaries">
+              <div className="flex justify-between items-center mb-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Solicitudes de ayuda
+                </p>
+                <Button onClick={handleOpenAdd} className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 cursor-pointer font-semibold gap-1">
+                  <Plus className="w-4 h-4" /> Agregar Beneficiario
+                </Button>
+              </div>
               {filteredBeneficiaries.length === 0 && (
                 <EmptyState text={search || filterStatus !== 'all' ? 'Sin resultados para los filtros aplicados.' : 'No hay solicitudes aún.'} />
               )}
@@ -296,7 +456,15 @@ export default function AdminPage() {
                       {labels[sg]} <span className="text-primary">({group.length})</span>
                     </p>
                     <div className="space-y-2">
-                      {group.map((b) => <BeneficiaryRow key={b.id} beneficiary={b} onUpdate={updateBeneficiary} />)}
+                      {group.map((b) => (
+                        <BeneficiaryRow
+                          key={b.id}
+                          beneficiary={b}
+                          onUpdate={updateBeneficiary}
+                          onEdit={handleOpenEdit}
+                          onDelete={handleDeleteBeneficiary}
+                        />
+                      ))}
                     </div>
                   </div>
                 )
@@ -304,6 +472,117 @@ export default function AdminPage() {
             </TabsContent>
           </Tabs>
         )}
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto bg-card border-border text-foreground">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold uppercase">
+                {editingBeneficiary ? 'Editar Beneficiario' : 'Agregar Beneficiario'}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                {editingBeneficiary ? 'Modifica los datos del registro y presiona Guardar.' : 'Completa la información para registrar una nueva familia.'}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleFormSubmit} className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Nombres *</Label>
+                  <Input required value={formFirstName} onChange={e => setFormFirstName(e.target.value)} className="bg-background border-border h-9" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Apellidos *</Label>
+                  <Input required value={formLastName} onChange={e => setFormLastName(e.target.value)} className="bg-background border-border h-9" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-1">
+                  <Label className="text-xs text-muted-foreground mb-1 block">Cédula</Label>
+                  <Input value={formCedula} onChange={e => setFormCedula(e.target.value)} className="bg-background border-border h-9" />
+                </div>
+                <div className="col-span-1">
+                  <Label className="text-xs text-muted-foreground mb-1 block">Teléfono *</Label>
+                  <Input required value={formPhone} onChange={e => setFormPhone(e.target.value)} className="bg-background border-border h-9" />
+                </div>
+                <div className="col-span-1">
+                  <Label className="text-xs text-muted-foreground mb-1 block">Teléfono Alt</Label>
+                  <Input value={formAltPhone} onChange={e => setFormAltPhone(e.target.value)} className="bg-background border-border h-9" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Estado *</Label>
+                  <select value={formState} onChange={e => setFormState(e.target.value)} className="w-full bg-background border border-border rounded-md px-3 h-9 text-sm focus:outline-none">
+                    {VENEZUELA_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Ciudad</Label>
+                  <Input value={formCity} onChange={e => setFormCity(e.target.value)} className="bg-background border-border h-9" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Situación *</Label>
+                  <select value={formSituation} onChange={e => setFormSituation(e.target.value)} className="w-full bg-background border border-border rounded-md px-3 h-9 text-sm focus:outline-none">
+                    {SITUATIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Integrantes Hogar *</Label>
+                  <select value={formHouseholdSize} onChange={e => setFormHouseholdSize(e.target.value)} className="w-full bg-background border border-border rounded-md px-3 h-9 text-sm focus:outline-none">
+                    <option value="1-2">1-2 personas</option>
+                    <option value="3-4">3-4 personas</option>
+                    <option value="5+">5 o más personas</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Billetera USDT (TRC-20)</Label>
+                <Input value={formUsdtWallet} onChange={e => setFormUsdtWallet(e.target.value)} placeholder="Dirección de wallet" className="bg-background border-border h-9" />
+              </div>
+
+              <div className="flex gap-6 py-1">
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" checked={formHasMinors} onChange={e => setFormHasMinors(e.target.checked)} className="rounded border-border accent-primary w-4 h-4" />
+                  Tiene menores en el hogar
+                </label>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" checked={formHasElders} onChange={e => setFormHasElders(e.target.checked)} className="rounded border-border accent-primary w-4 h-4" />
+                  Tiene adultos mayores
+                </label>
+              </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Detalles adicionales</Label>
+                <Textarea value={formDetails} onChange={e => setFormDetails(e.target.value)} rows={2} className="bg-background border-border text-sm" />
+              </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Estado de la solicitud *</Label>
+                <select value={formStatus} onChange={e => setFormStatus(e.target.value as BeneficiaryStatus)} className="w-full bg-background border border-border rounded-md px-3 h-9 text-sm focus:outline-none">
+                  <option value="pending">Pendiente por verificar</option>
+                  <option value="verified">Verificado (listo para ayuda)</option>
+                  <option value="helped">Ayuda enviada (completado)</option>
+                  <option value="rejected">Rechazado</option>
+                </select>
+              </div>
+
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={formSubmitting} className="h-10 cursor-pointer">
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={formSubmitting} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-10 cursor-pointer">
+                  {formSubmitting ? 'Guardando...' : 'Guardar'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   )
@@ -364,7 +643,17 @@ function DonationRow({ donation: d, onUpdate }: { donation: Donation; onUpdate: 
   )
 }
 
-function BeneficiaryRow({ beneficiary: b, onUpdate }: { beneficiary: Beneficiary; onUpdate: (id: string, s: BeneficiaryStatus) => void }) {
+function BeneficiaryRow({
+  beneficiary: b,
+  onUpdate,
+  onEdit,
+  onDelete,
+}: {
+  beneficiary: Beneficiary
+  onUpdate: (id: string, s: BeneficiaryStatus) => void
+  onEdit: (b: Beneficiary) => void
+  onDelete: (id: string) => void
+}) {
   const date = new Date(b.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
@@ -374,7 +663,7 @@ function BeneficiaryRow({ beneficiary: b, onUpdate }: { beneficiary: Beneficiary
       : b.status === 'helped'   ? 'border-success/30 bg-success/5'
       : 'border-border bg-card opacity-50'
     }`}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-semibold text-sm text-foreground">{b.firstName} {b.lastName}</span>
@@ -386,30 +675,45 @@ function BeneficiaryRow({ beneficiary: b, onUpdate }: { beneficiary: Beneficiary
           <p className="text-xs text-muted-foreground">{b.cedula ?? 'Sin cédula'} · {b.phone}</p>
           <p className="text-xs text-muted-foreground mt-0.5">{date}</p>
         </div>
-        <div className="flex flex-col gap-1.5 shrink-0">
-          {b.status === 'pending' && (
-            <>
-              <Button size="sm" onClick={() => onUpdate(b.id, 'verified')}
-                className="bg-info hover:bg-info/90 text-white text-xs h-8 cursor-pointer">
-                <CheckCircle className="w-3 h-3 mr-1" />Verificar
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => onUpdate(b.id, 'rejected')}
-                className="border-destructive/40 text-destructive hover:bg-destructive/10 text-xs h-8 cursor-pointer">
-                <XCircle className="w-3 h-3 mr-1" />Rechazar
-              </Button>
-            </>
-          )}
-          {b.status === 'verified' && (
-            <Button size="sm" onClick={() => onUpdate(b.id, 'helped')}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8 cursor-pointer">
-              <Send className="w-3 h-3 mr-1" />Ayuda enviada
+        <div className="flex flex-row items-center gap-3 self-end sm:self-auto">
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => onEdit(b)}
+              className="border-border hover:bg-muted text-muted-foreground hover:text-foreground text-xs h-8 cursor-pointer px-2.5">
+              <Edit className="w-3.5 h-3.5" />
             </Button>
-          )}
-          {b.status === 'helped' && (
-            <span className="text-xs text-success flex items-center gap-1">
-              <CheckCircle className="w-3 h-3" />Completado
-            </span>
-          )}
+            <Button size="sm" variant="outline" onClick={() => onDelete(b.id)}
+              className="border-destructive/30 hover:bg-destructive/15 text-destructive text-xs h-8 cursor-pointer px-2.5">
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
+          <div className="h-6 w-px bg-border hidden sm:block" />
+
+          <div className="flex gap-1.5">
+            {b.status === 'pending' && (
+              <>
+                <Button size="sm" onClick={() => onUpdate(b.id, 'verified')}
+                  className="bg-info hover:bg-info/90 text-white text-xs h-8 cursor-pointer">
+                  <CheckCircle className="w-3 h-3 mr-1" />Verificar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => onUpdate(b.id, 'rejected')}
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10 text-xs h-8 cursor-pointer">
+                  <XCircle className="w-3 h-3 mr-1" />Rechazar
+                </Button>
+              </>
+            )}
+            {b.status === 'verified' && (
+              <Button size="sm" onClick={() => onUpdate(b.id, 'helped')}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8 cursor-pointer">
+                <Send className="w-3 h-3 mr-1" />Ayuda enviada
+              </Button>
+            )}
+            {b.status === 'helped' && (
+              <span className="text-xs text-success flex items-center gap-1 py-1">
+                <CheckCircle className="w-3 h-3" />Completado
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

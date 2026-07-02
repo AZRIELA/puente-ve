@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { Heart, Users, ArrowRight, Globe, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -28,11 +28,6 @@ export default function HomePage() {
           Puente VE
         </span>
         <div className="flex items-center gap-3">
-          <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-sm cursor-pointer">
-              Entrar
-            </Button>
-          </Link>
           <Link href="/donar">
             <Button
               size="sm"
