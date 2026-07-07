@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { verifyAdminRequest } from '@/lib/auth'
+import { verifyAdminRequest, getCurrentUser } from '@/lib/auth'
+import { createId } from '@paralleldrive/cuid2'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await verifyAdminRequest(req))) {
@@ -47,6 +48,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     args,
   })
   
+  const user = await getCurrentUser(req)
+  if (user) {
+    const action = body.status ? body.status : 'edited'
+    await db.execute({
+      sql: `INSERT INTO BeneficiaryLog (id, beneficiaryId, userId, action, createdAt) VALUES (?, ?, ?, ?, ?)`,
+      args: [createId(), id, user.userId, action, new Date().toISOString()],
+    })
+  }
+  
   return NextResponse.json({ id, ...body })
 }
 
@@ -56,6 +66,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
   
   const { id } = await params
+  const user = await getCurrentUser(req)
+  if (user) {
+    await db.execute({
+      sql: `INSERT INTO BeneficiaryLog (id, beneficiaryId, userId, action, createdAt) VALUES (?, ?, ?, ?, ?)`,
+      args: [createId(), id, user.userId, 'deleted', new Date().toISOString()],
+    })
+  }
+
   await db.execute({
     sql: 'DELETE FROM Beneficiary WHERE id = ?',
     args: [id],

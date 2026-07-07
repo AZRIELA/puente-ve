@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { createId } from '@paralleldrive/cuid2'
 
-import { verifyAdminRequest } from '@/lib/auth'
+import { verifyAdminRequest, getCurrentUser } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
   if (!(await verifyAdminRequest(req))) {
@@ -51,6 +51,15 @@ export async function POST(req: NextRequest) {
       status,
       now, now,
     ],
+  })
+
+  // Audit Log
+  const user = await getCurrentUser(req)
+  const userId = user ? user.userId : null
+
+  await db.execute({
+    sql: `INSERT INTO BeneficiaryLog (id, beneficiaryId, userId, action, createdAt) VALUES (?, ?, ?, ?, ?)`,
+    args: [createId(), id, userId, 'created', now],
   })
 
   return NextResponse.json({ id, status }, { status: 201 })

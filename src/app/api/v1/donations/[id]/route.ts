@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-
-import { verifyAdminRequest } from '@/lib/auth'
+import { verifyAdminRequest, getCurrentUser } from '@/lib/auth'
+import { createId } from '@paralleldrive/cuid2'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await verifyAdminRequest(req))) {
@@ -18,6 +18,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     sql: `UPDATE Donation SET status = ?, updatedAt = ? WHERE id = ?`,
     args: [status, new Date().toISOString(), id],
   })
+
+  const user = await getCurrentUser(req)
+  if (user) {
+    await db.execute({
+      sql: `INSERT INTO DonationLog (id, donationId, userId, action, createdAt) VALUES (?, ?, ?, ?, ?)`,
+      args: [createId(), id, user.userId, status, new Date().toISOString()],
+    })
+  }
 
   return NextResponse.json({ id, status })
 }

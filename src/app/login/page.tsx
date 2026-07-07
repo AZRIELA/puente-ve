@@ -89,6 +89,12 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div className="flex justify-end">
+              <Link href="/login/recover" className="text-xs text-[oklch(0.55_0.015_255)] hover:text-[oklch(0.82_0.16_85)] transition-colors">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+
             {error && <p className="text-sm text-[oklch(0.52_0.20_25)]">{error}</p>}
 
             <Button

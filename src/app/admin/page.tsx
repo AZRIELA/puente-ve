@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   CheckCircle, XCircle, DollarSign, Users, TrendingUp,
-  Send, Eye, Search, SlidersHorizontal, LogOut, Plus, Edit, Trash2,
+  Send, Eye, Search, SlidersHorizontal, LogOut, Plus, Edit, Trash2, Key,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -212,6 +212,48 @@ export default function AdminPage() {
     router.push('/login')
   }
 
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changePasswordError, setChangePasswordError] = useState('')
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState(false)
+  const [changePasswordSubmitting, setChangePasswordSubmitting] = useState(false)
+
+  async function handleChangePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setChangePasswordError('')
+    setChangePasswordSuccess(false)
+
+    if (newPassword !== confirmPassword) {
+      setChangePasswordError('Las contraseñas nuevas no coinciden')
+      return
+    }
+
+    setChangePasswordSubmitting(true)
+    try {
+      const res = await fetch('/api/v1/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      if (res.ok) {
+        setChangePasswordSuccess(true)
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+        setTimeout(() => setIsChangePasswordOpen(false), 1500)
+      } else {
+        const data = await res.json()
+        setChangePasswordError(data.error || 'Error al cambiar la contraseña')
+      }
+    } catch {
+      setChangePasswordError('Error al conectar con el servidor')
+    } finally {
+      setChangePasswordSubmitting(false)
+    }
+  }
+
   useEffect(() => {
     Promise.all([
       fetch('/api/v1/donations').then((r) => r.json()),
@@ -291,6 +333,17 @@ export default function AdminPage() {
                 {pendingDonations + pendingBeneficiaries} pendientes
               </span>
             )}
+            <button
+              onClick={() => {
+                setChangePasswordError('')
+                setChangePasswordSuccess(false)
+                setIsChangePasswordOpen(true)
+              }}
+              className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/45 transition-all cursor-pointer"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Cambiar Clave</span>
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-xs text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-all cursor-pointer"
@@ -578,6 +631,44 @@ export default function AdminPage() {
                 </Button>
                 <Button type="submit" disabled={formSubmitting} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-10 cursor-pointer">
                   {formSubmitting ? 'Guardando...' : 'Guardar'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+          <DialogContent className="max-w-sm bg-card border-border text-foreground">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold uppercase">Cambiar Contraseña</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Ingresa tu contraseña actual y define tu nueva contraseña.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleChangePasswordSubmit} className="space-y-4 py-2">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Contraseña Actual *</Label>
+                <Input required type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="bg-background border-border h-9" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Nueva Contraseña *</Label>
+                <Input required type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-background border-border h-9" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Confirmar Nueva Contraseña *</Label>
+                <Input required type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="bg-background border-border h-9" />
+              </div>
+
+              {changePasswordError && <p className="text-xs text-destructive">{changePasswordError}</p>}
+              {changePasswordSuccess && <p className="text-xs text-success font-semibold">¡Contraseña cambiada con éxito!</p>}
+
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="ghost" onClick={() => setIsChangePasswordOpen(false)} disabled={changePasswordSubmitting} className="h-9 cursor-pointer text-xs">
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={changePasswordSubmitting} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-9 cursor-pointer text-xs">
+                  {changePasswordSubmitting ? 'Guardando...' : 'Cambiar Clave'}
                 </Button>
               </DialogFooter>
             </form>

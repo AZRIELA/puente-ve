@@ -73,9 +73,20 @@ export async function verifyToken(token: string): Promise<any> {
   }
 }
 
-export async function verifyAdminRequest(req: NextRequest): Promise<boolean> {
+export async function getCurrentUser(req: NextRequest): Promise<{ userId: string; email: string; role: string; name: string } | null> {
   const cookie = req.cookies.get('admin-session')
-  if (!cookie) return false
+  if (!cookie) return null
   const payload = await verifyToken(cookie.value)
-  return !!(payload && payload.role === 'admin')
+  if (!payload || !payload.userId) return null
+  return {
+    userId: payload.userId,
+    email: payload.email,
+    role: payload.role,
+    name: payload.name ?? 'Usuario',
+  }
+}
+
+export async function verifyAdminRequest(req: NextRequest): Promise<boolean> {
+  const user = await getCurrentUser(req)
+  return !!(user && (user.role === 'admin' || user.role === 'operator'))
 }
